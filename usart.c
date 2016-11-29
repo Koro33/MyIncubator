@@ -1,0 +1,407 @@
+#include "usart.h"
+#include "main.h"
+#include <stdarg.h>
+#include <stdio.h>
+
+#define U1_IT_MaxBufferSize 128 // usart1队列中断缓冲大小
+#define U2_CMD_BUFFER_LEN 128   // usart2发送缓冲
+
+// usart1队列中断缓冲
+uint8_t U1_IT_rxBuffer[U1_IT_MaxBufferSize];
+// usart1 发送缓冲区
+extern char U1_rxBuffer[128];
+// usart1 接收缓冲区
+extern char U1_txBuffer[128];
+// usart2 发送缓冲区
+extern char U2_rxBuffer[64];
+// HMI协议结束帧
+static uint8_t endCmd[3] = {0xff, 0xff, 0xff};
+// 目标温度
+extern float TargetTemp;
+// 融合数据存储区
+extern float SensorTempProcessed[3];
+// 与串口屏的功能切换标志 0：主界面更新温度  1：图表界面更新曲线
+extern int8_t Usart1TmtChoiceFlag;
+// 加热器功率
+extern uint16_t HeatPower;
+// 风扇功率
+extern uint16_t FanPower;
+
+struct que // usart1中断队列结构体
+{
+  uint8_t *head;
+  uint8_t *tail;
+} rxQue;
+
+/**
+	* @brief  USART配置, 	usart1 工作模式 115200 8-N-1 双收发 + NVIC + QUE 
+	*											usart2 工作模式 115200 8-N-1 单发不收 但GPIO口仍然初始化保留
+	* @param  无
+	* @return 无
+	* @attention 无
+	*/
+void USART_Config(void)
+{
+  //usart1初始化（GPIO+USART+NVIC+CircleReceive）
+  /*************************************************************************************************/
+  GPIO_InitTypeDef GPIO_InitStructure;
+  USART_InitTypeDef USART_InitStructure;
+  NVIC_InitTypeDef NVIC_InitStructure;
+
+  /* config USART1 clock */
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1 | RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
+
+  /* USART1 GPIO config */
+  /* Configure USART1 Tx (PA.09) as alternate function push-pull */
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+  /* Configure USART1 Rx (PA.10) as input floating */
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+  /* USART1 mode config */
+  USART_InitStructure.USART_BaudRate = 115200;
+  USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+  USART_InitStructure.USART_StopBits = USART_StopBits_1;
+  USART_InitStructure.USART_Parity = USART_Parity_No;
+  USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+  USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+  USART_Init(USART1, &USART_InitStructure);
+
+  USART_Cmd(USART1, ENABLE);
+
+  //Usart1 NVIC 配置
+  NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE; //IRQ通道使能
+  NVIC_Init(&NVIC_InitStructure);		  //初始化外设NVIC寄存器USART1
+
+  USART_ITConfig(USART1, USART_IT_RXNE, ENABLE); //开启中断
+
+  //Usart1 接收环形队列初始化
+  rxQue.head = U1_IT_rxBuffer;
+  rxQue.tail = U1_IT_rxBuffer;
+  /*************************************************************************************************/
+
+  //usart2初始化（GPIO+USART）
+  /*************************************************************************************************/
+
+  /* config USART2 clock */
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
+
+  /* USART1 GPIO config */
+  /* Configure USART2 Tx (PA.02) as alternate function push-pull */
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+  /* Configure USART2 Rx (PA.3) as input floating */
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+  /* USART2 mode config */
+  USART_InitStructure.USART_BaudRate = 115200;
+  USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+  USART_InitStructure.USART_StopBits = USART_StopBits_1;
+  USART_InitStructure.USART_Parity = USART_Parity_No;
+  USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+  USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+  USART_Init(USART2, &USART_InitStructure);
+
+  USART_Cmd(USART2, ENABLE);
+  /*************************************************************************************************/
+}
+
+/**
+	* @brief  重定向c库函数printf到USART1
+	* @param  无
+	* @return 无
+	* @attention 无
+	*/
+int fputc(int ch, FILE *f)
+{
+  /* 发送一个字节数据到USART1 */
+  USART_SendData(USART1, (uint8_t)ch);
+
+  /* 等待发送完毕 */
+  while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
+    ;
+
+  return (ch);
+}
+
+/**
+	* @brief  重定向c库函数scanf到USART1
+	* @param  无
+	* @return 无
+	* @attention 无
+	*/
+int fgetc(FILE *f)
+{
+  /* 等待串口1输入数据 */
+  while (USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == RESET)
+    ;
+
+  return (int)USART_ReceiveData(USART1);
+}
+
+/**
+	* @brief  自定义类printf函数到UASRT2
+	* @param  无
+	* @return 无
+	* @attention 无
+	*/
+void usart2Printf(char *fmt, ...)
+{
+  char buffer[U2_CMD_BUFFER_LEN - 1];
+  u8 i = 0;
+  u8 len;
+
+  va_list arg_ptr;						//Define convert parameters variable
+  va_start(arg_ptr, fmt);					//Init variable
+  len = vsnprintf(buffer, U2_CMD_BUFFER_LEN + 1, fmt, arg_ptr); //parameters list format to buffer
+
+  while ((i < U2_CMD_BUFFER_LEN) && (i < len) && (len > 0))
+  {
+    USART_SendData(USART2, (u8)buffer[i++]);
+    while (USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET)
+      ;
+  }
+  va_end(arg_ptr);
+}
+
+/**
+	* @brief  发送HMI协议中的停止帧
+	* @param  无
+	* @return 无
+	* @attention 无
+	*/
+void usart1_sendEndCmd(void)
+{
+  int i = 0;
+
+  for (i = 0; i < 3; i++)
+  {
+    /* 通过串口1发送 */
+    USART_SendData(USART1, endCmd[i]);
+    /* 等待发送完毕 */
+    while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
+      ;
+  }
+}
+
+/**
+	* @brief  读取环形缓冲队列中的元素，并从队列中去除
+	* @param  无
+	* @return 读取到的字符
+	* @attention 预先要经过uart1_avilable()的判断队列中是否有待处理元素
+	*/
+uint8_t usart1_read(void)
+{
+  uint8_t temp = 0;
+  if (usart1_avilable() == 0)
+  {
+    return 0;
+  }
+  if (rxQue.head != (U1_IT_rxBuffer + U1_IT_MaxBufferSize - 1))
+  {
+    temp = *rxQue.head;
+    rxQue.head++;
+  }
+  else
+  {
+    temp = *rxQue.head;
+    rxQue.head = U1_IT_rxBuffer;
+  }
+
+  return temp;
+}
+
+/**
+	* @brief  读取环形缓冲队列中的元素，不去除元素
+	* @param  无
+	* @return 读取到的字符
+	* @attention 预先要经过uart1_avilable()的判断队列中是否有待处理元素
+	*/
+uint8_t usart1_peek(void)
+{
+  uint8_t temp = 0;
+  if (usart1_avilable() == 0)
+  {
+    return 0;
+  }
+
+  temp = *rxQue.head;
+
+  return temp;
+}
+
+/**
+	* @brief  判断usart1的环形缓冲队列中是否有未处理的元素
+	* @param  无
+	* @return 无
+	* @attention 无
+	*/
+int usart1_avilable(void)
+{
+  if (rxQue.head != rxQue.tail)
+  {
+    return 1;
+  }
+  else
+  {
+    return 0;
+  }
+}
+/**
+	* @brief  usart1的中断函数处理的集合，会放入USART1_IRQHandler()中
+	* @param  无
+	* @return 无
+	* @attention 无
+	*/
+void USART1_IRQHandler_ex(void)
+{
+  if (USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == SET)
+  {
+    while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
+      ;
+    //		temp=USART_ReceiveData(USART1);
+    if (rxQue.tail != (U1_IT_rxBuffer + U1_IT_MaxBufferSize - 1))
+    {
+      *rxQue.tail = USART_ReceiveData(USART1);
+      rxQue.tail++;
+    }
+    else
+    {
+      *rxQue.tail = USART_ReceiveData(USART1);
+      rxQue.tail = U1_IT_rxBuffer;
+    }
+  }
+}
+
+/**
+	* @brief  usart1的接收任务
+	* @param  无
+	* @return 无
+	* @attention 无
+	*/
+int usart1_RevTask(void)
+{
+  if (usart1_avilable() > 0)
+  {
+    while (usart1_peek() != 0xff)
+    {
+      strcatchar(U1_rxBuffer, (char)(usart1_read()));
+      Delay_us(200);
+    }
+    usart1_read();
+    Delay_us(200);
+    usart1_read();
+    Delay_us(200);
+    usart1_read();
+
+    if (U1_rxBuffer[0] == 0x03)
+    {
+      if (U1_rxBuffer[1] == 0x07)
+      {
+        if (U1_rxBuffer[2] == 0x71)
+        {
+          if (U1_rxBuffer[3] == 0x00)
+          {
+						
+          }
+          if (U1_rxBuffer[3] == 0x01)
+          {
+          }
+        }
+      }
+    }
+  }
+  strclr(U1_rxBuffer);
+  return 1;
+}
+/**
+	* @brief  usart1的发送任务
+	* @param  无
+	* @return 无
+	* @attention 无
+	*/
+int usart1_TmtTask(void)
+{
+	if(Usart1TmtChoiceFlag == 0)
+	{
+		printf("main.t0.txt=%.1f",SensorTempProcessed[0]);
+		sendHMIEndCmd();
+		printf("main.h0.val=%d", HeatPower);
+		sendHMIEndCmd();
+		printf("main.h1.val=%d", FanPower);
+		sendHMIEndCmd();
+	}
+	else if(Usart1TmtChoiceFlag == 1)
+	{
+		printf("add 1,0,%d",(int)(SensorTempProcessed[0] * 3));
+		sendHMIEndCmd();
+		printf("add 1,1,%d",(int)(TargetTemp * 3));
+		sendHMIEndCmd();
+	}
+	else
+	{
+		;
+	}
+  return 1;
+}
+/**
+	* @brief  将char型追加到字符串后面
+	* @param  无
+	* @return 0：failed 1：successful
+	* @attention 无
+	*/
+int strcatchar(char *front, char rear)
+{
+  uint8_t pos = 0;
+
+  pos = strlen(front);
+  front[pos] = rear;
+  front[pos + 1] = '\0';
+
+  return 1;
+}
+/**
+	* @brief  清除字符串
+	* @param  无
+	* @return 0：failed 1：successful
+	* @attention 无
+	*/
+int strclr(char *str)
+{
+  str[0] = '\0';
+  return 1;
+}
+/**
+	* @brief  发送HMI协议停止帧
+	* @param  无
+	* @return 0：failed 1：successful
+	* @attention 无
+	*/
+int sendHMIEndCmd(void)
+{
+	printf("%X%X%X",endCmd[0],endCmd[1],endCmd[2]);
+	return 1;
+}
+/**
+	* @brief  无
+	* @param  无
+	* @return 无
+	* @attention 无
+	*/
+
+/*********************************************END OF FILE**********************/
