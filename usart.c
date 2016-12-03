@@ -14,14 +14,14 @@ extern char U1_rxBuffer[128];
 extern char U1_txBuffer[128];
 // usart2 发送缓冲区
 extern char U2_rxBuffer[64];
-// HMI协议结束帧
-static uint8_t endCmd[3] = {0xff, 0xff, 0xff};
 // 目标温度
 extern float TargetTemp;
 // 融合数据存储区
 extern float SensorTempProcessed[3];
 // 与串口屏的功能切换标志 0：主界面更新温度  1：图表界面更新曲线
 extern int8_t Usart1TmtChoiceFlag;
+// 控制方式的选择，0：手动 1：BB控制 2：PID控制 
+extern int8_t CtrlMode;
 // 加热器功率
 extern uint16_t HeatPower;
 // 风扇功率
@@ -180,26 +180,6 @@ void usart2Printf(char *fmt, ...)
 }
 
 /**
-	* @brief  发送HMI协议中的停止帧
-	* @param  无
-	* @return 无
-	* @attention 无
-	*/
-void usart1_sendEndCmd(void)
-{
-  int i = 0;
-
-  for (i = 0; i < 3; i++)
-  {
-    /* 通过串口1发送 */
-    USART_SendData(USART1, endCmd[i]);
-    /* 等待发送完毕 */
-    while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
-      ;
-  }
-}
-
-/**
 	* @brief  读取环形缓冲队列中的元素，并从队列中去除
 	* @param  无
 	* @return 读取到的字符
@@ -248,7 +228,7 @@ uint8_t usart1_peek(void)
 /**
 	* @brief  判断usart1的环形缓冲队列中是否有未处理的元素
 	* @param  无
-	* @return 无
+	* @return 0: 无  1：有
 	* @attention 无
 	*/
 int usart1_avilable(void)
@@ -309,22 +289,49 @@ int usart1_RevTask(void)
     Delay_us(200);
     usart1_read();
 
-    if (U1_rxBuffer[0] == 0x03)
+    if (U1_rxBuffer[0] == 0x65) //某些按键被按下
     {
-      if (U1_rxBuffer[1] == 0x07)
+      if (U1_rxBuffer[1] == 0x01)
       {
-        if (U1_rxBuffer[2] == 0x71)
+        if ((U1_rxBuffer[2] == 0x05)||(U1_rxBuffer[2] == 0x06)) // 页面切换到curve，切换串口发送任务标志
         {
-          if (U1_rxBuffer[3] == 0x00)
-          {
-						
-          }
-          if (U1_rxBuffer[3] == 0x01)
-          {
-          }
+					Usart1TmtChoiceFlag = 1;
+        }
+				if (U1_rxBuffer[2] == 0x08) // 手动控制模式
+        {
+					CtrlMode = 0;
+        }
+				if (U1_rxBuffer[2] == 0x0A) // BB控制模式
+        {
+					CtrlMode = 2;
+        }
+				if (U1_rxBuffer[2] == 0x0B) // PID控制模式
+        {
+					CtrlMode = 1;
         }
       }
+			if (U1_rxBuffer[1] == 0x02)
+			{
+				if (U1_rxBuffer[2] == 0x02) // 从curve界面返回，继续切换串口发送任务标志
+				{
+					Usart1TmtChoiceFlag = 0;
+				}
+			}
     }
+		if (U1_rxBuffer[0] == 0x67) //需要修改数据
+		{
+			if (U1_rxBuffer[1] == 0x01)
+			{
+				if (U1_rxBuffer[2] == 0x0C) // 手动加热片功率
+				{
+					HeatPower = U1_rxBuffer[4] + U1_rxBuffer[5] * 256;
+				}
+				if (U1_rxBuffer[2] == 0x0D) // 手动风扇功率
+				{
+					FanPower = U1_rxBuffer[4] + U1_rxBuffer[5] * 256;
+				}
+			}
+		}
   }
   strclr(U1_rxBuffer);
   return 1;
@@ -339,19 +346,23 @@ int usart1_TmtTask(void)
 {
 	if(Usart1TmtChoiceFlag == 0)
 	{
-		printf("main.t0.txt=%.1f",SensorTempProcessed[0]);
-		sendHMIEndCmd();
-		printf("main.h0.val=%d", HeatPower);
-		sendHMIEndCmd();
-		printf("main.h1.val=%d", FanPower);
-		sendHMIEndCmd();
+		printf("main.t0.txt=\"%.1f\"",SensorTempProcessed[0]);
+		usart1_sendHMIEndCmd();
+		if((CtrlMode == 1)||(CtrlMode == 2))
+		{
+			printf("main.h0.val=%d", HeatPower);
+			usart1_sendHMIEndCmd();
+			printf("main.h1.val=%d", FanPower);
+			usart1_sendHMIEndCmd();
+		}
+		
 	}
 	else if(Usart1TmtChoiceFlag == 1)
 	{
 		printf("add 1,0,%d",(int)(SensorTempProcessed[0] * 3));
-		sendHMIEndCmd();
+		usart1_sendHMIEndCmd();
 		printf("add 1,1,%d",(int)(TargetTemp * 3));
-		sendHMIEndCmd();
+		usart1_sendHMIEndCmd();
 	}
 	else
 	{
@@ -392,9 +403,18 @@ int strclr(char *str)
 	* @return 0：failed 1：successful
 	* @attention 无
 	*/
-int sendHMIEndCmd(void)
+int usart1_sendHMIEndCmd(void)
 {
-	printf("%X%X%X",endCmd[0],endCmd[1],endCmd[2]);
+	USART_SendData(USART1, 0xff);
+  while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
+    ;
+	USART_SendData(USART1, 0xff);
+  while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
+    ;
+	USART_SendData(USART1, 0xff);
+  while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
+    ;
+	
 	return 1;
 }
 /**

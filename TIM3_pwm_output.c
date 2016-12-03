@@ -153,18 +153,36 @@ void TIM3_PWM_Init(void)
 
 /********************************************************************************************/
 //以下为高级自定义函数
-
+/**
+	* @brief  设置加热片1的功率
+	* @param  power：功率值，取值范围（0-999）
+	* @return 0：失败 1：成功
+	* @attention 
+	*/
 int setPower_Heat1(uint16_t power)
 {
-	
+	TIM3_CH1_Mode_Config(power);
 	return 1;
 }
 
+/**
+	* @brief  设置加热片2的功率
+	* @param  power：功率值，取值范围（0-999）
+	* @return 0：失败 1：成功
+	* @attention 
+	*/
 int setPower_Heat2(uint16_t power)
 {
-	
+	TIM3_CH2_Mode_Config(power);
 	return 1;
 }
+
+/**
+	* @brief  同时设置加热片1、2的功率
+	* @param  power1：功率值，取值范围（0-999） power2：功率值，取值范围（0-999）
+	* @return 0：失败 1：成功
+	* @attention 
+	*/
 int setPower_Heat1_Heat2(uint16_t power1, uint16_t power2)
 {
 	setPower_Heat1(power1);
@@ -172,9 +190,16 @@ int setPower_Heat1_Heat2(uint16_t power1, uint16_t power2)
 	
 	return 1;
 }
+
+/**
+	* @brief  设置风扇的功率
+	* @param  power：功率值，取值范围（0-999）
+	* @return 0：失败 1：成功
+	* @attention 
+	*/
 int setPower_Fan(uint16_t power)
 {
-	
+	TIM3_CH3_Mode_Config(power);
 	return 1;
 }
 

@@ -68,7 +68,7 @@ float BB_Control_1(float current_position, float target_position)
 //    output = -PID_1.MAXOUT;
 //  }
 
-//  return output;
+  return 1;
 }
 /**
 	* @brief  传感器融合算法（加权平均）

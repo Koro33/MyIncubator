@@ -13,7 +13,7 @@ void DS18B20_1_GPIO_Config(void)
   RCC_APB2PeriphClockCmd(DS18B20_1_GPIOCLOCK, ENABLE);
   GPIO_WriteBit(DS18B20_1_PORT, DS18B20_1_BIT, Bit_SET);
   GPIO_InitStructure.GPIO_Pin = DS18B20_1_BIT;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 
   GPIO_Init(DS18B20_1_PORT, &GPIO_InitStructure);
@@ -30,7 +30,7 @@ void DS18B20_1_Rst(void)
   CLR_DS18B20_1();	 //À­µÍDQ
   delay_us_ds18b20(750); //À­µÍ750us
   SET_DS18B20_1();	 //DQ=1
-  delay_us_ds18b20(15);  //15us
+  delay_us_ds18b20(60);  //15us
 }
 
 /**
@@ -47,7 +47,7 @@ uint8_t DS18B20_1_Check(void)
   while (DS18B20_1_DQ_IN && retry < 200)
   {
     retry++;
-    delay_us_ds18b20(1);
+    delay_us_ds18b20(2);
   }
   if (retry >= 200)
     return 1;
@@ -56,7 +56,7 @@ uint8_t DS18B20_1_Check(void)
   while (!DS18B20_1_DQ_IN && retry < 240)
   {
     retry++;
-    delay_us_ds18b20(1);
+    delay_us_ds18b20(2);
   }
   if (retry >= 240)
     return 1;
@@ -74,9 +74,9 @@ uint8_t DS18B20_1_Read_Bit(void) // read one bit
   uint8_t data;
 
   CLR_DS18B20_1(); //À­µÍDQ
-  delay_us_ds18b20(2);
+  delay_us_ds18b20(3);
   SET_DS18B20_1(); //DQ=1
-  delay_us_ds18b20(12);
+  delay_us_ds18b20(4);
   if (DS18B20_1_DQ_IN)
   {
     data = 1;
@@ -85,7 +85,7 @@ uint8_t DS18B20_1_Read_Bit(void) // read one bit
   {
     data = 0;
   }
-  delay_us_ds18b20(50);
+  delay_us_ds18b20(55);
 
   return data;
 }
@@ -127,16 +127,16 @@ void DS18B20_1_Write_Byte(uint8_t dat)
     if (testb)
     {
       CLR_DS18B20_1(); //DS18B20_DQ_OUT=0;// Write 1
-      delay_us_ds18b20(2);
+      delay_us_ds18b20(3);
       SET_DS18B20_1(); //DS18B20_DQ_OUT=1;
-      delay_us_ds18b20(60);
+      delay_us_ds18b20(65);
     }
     else
     {
       CLR_DS18B20_1(); //DS18B20_DQ_OUT=0;// Write 0
-      delay_us_ds18b20(60);
+      delay_us_ds18b20(65);
       SET_DS18B20_1(); //DS18B20_DQ_OUT=1;
-      delay_us_ds18b20(2);
+      delay_us_ds18b20(3);
     }
   }
 }
@@ -228,10 +228,26 @@ short DS18B20_1_Get_Temp(void)
 	*/
 void delay_us_ds18b20(uint32_t value)
 {
-	volatile uint32_t i=0;
 //	volatile uint32_t i=0;
-	i = value * 9;
-	while(i--)
-		;
+////	volatile uint32_t i=0;
+//	i = value * 11;
+//	while(i--)
+//		;
+	value = value * 6;
+	for( ; value > 0; value--)
+	{
+		__nop();
+		__nop();
+		__nop();
+		__nop();
+		__nop();
+		
+		__nop();
+		__nop();
+		__nop();
+		__nop();
+		__nop();
+		
+	}
 //	Delay_us(value);
 }

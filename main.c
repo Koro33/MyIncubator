@@ -23,7 +23,7 @@ char U2_rxBuffer[64];
 // 与串口屏的功能切换标志 0：主界面更新温度  1：图表界面更新曲线
 int8_t Usart1TmtChoiceFlag = 0;
 // 控制方式的选择，0：手动 1：BB控制 2：PID控制 
-int8_t ctrlMode = 0;
+int8_t CtrlMode = 0;
 // PID控制器参数
 struct PID PID_1={20.0,2.0,1.0,999.0};
 // 加热器功率
@@ -34,23 +34,17 @@ uint16_t FanPower = 0;
 int main(void)
 {
 	incubatorInit();
-	//	int i=0;
 	while (1)
 	{
 //		int i;
 
-//		while (usart1_avilable())
-//		{
-//			bbb[0] = usart1_read();
-//			//			Delay_ms(1);
-//			Delay_us(200);
-//			USART_SendData(USART1, bbb[0]);
-//		}
+		if (usart1_avilable() == 1)
+		{
+			usart1_RevTask();
+		}
 		
 		if(TempUpdateFlag == 1)
 		{
-			SensorTemp_1[0]=DS18B20_1_Get_Temp() / 10.0;
-			SensorTemp_2[0]=DS18B20_2_Get_Temp() / 10.0;
 			#ifdef DEBUGIT
 			usart2Printf("RawTemp [1] %.2f  [2] %.2f\n", SensorTemp_1[0], SensorTemp_2[0]);
 			#endif
@@ -59,7 +53,7 @@ int main(void)
 			#ifdef DEBUGIT
 			usart2Printf("ProcessedTemp [*] %.3f\n", SensorTempProcessed[0]);
 			#endif
-			switch (ctrlMode)
+			switch (CtrlMode)
 			{
 				case 0: 
 				{
@@ -71,7 +65,7 @@ int main(void)
 				}
 				case 2: 
 				{
-					HeatPower = PID_Control_1(SensorTempProcessed[0], TargetTemp);
+//					HeatPower = PID_Control_1(SensorTempProcessed[0], TargetTemp);
 					break;
 				}
 				default:
@@ -80,10 +74,11 @@ int main(void)
 				}
 			}
 			setPower_Heat1_Heat2(HeatPower, HeatPower);
+			setPower_Fan(FanPower);
 			usart1_TmtTask();
 			TempUpdateFlag = 0;
 		}
-		Delay_ms(500);
+//		Delay_ms(100);
 	}
 }
 
@@ -107,13 +102,7 @@ int incubatorInit(void)
 	usart2Printf("[ok] [3] TIM3 ok! \n");
 	Delay_ms(20);
 	#endif
-	// TIM4初始化
-	TIM4_Init();
-	TIM_Cmd(TIM4, DISABLE); // 关闭定时采样中断
-	#ifdef DEBUGIT
-	usart2Printf("[ok] [4] TIM4 ok! \n");
-	Delay_ms(20);
-	#endif
+	
 	// DS18B20_1初始化
 	for(i=0;i<3;i++)
 	{
@@ -121,9 +110,18 @@ int incubatorInit(void)
 		{
 			float temp;
 			temp = DS18B20_1_Get_Temp()/10.0;
-			SensorTemp_1[0] = temp; 
-			SensorTemp_1[1] = temp; 
-			SensorTemp_1[2] = temp;
+			if((temp > 5.0)&&(temp < 70.0))
+			{
+				SensorTemp_1[0] = temp; 
+				SensorTemp_1[1] = temp; 
+				SensorTemp_1[2] = temp;
+			}else
+			{
+				temp = 20;
+				SensorTemp_1[0] = temp; 
+				SensorTemp_1[1] = temp; 
+				SensorTemp_1[2] = temp;
+			}
 			break;
 		}else
 		{
@@ -140,9 +138,18 @@ int incubatorInit(void)
 		{
 			float temp;
 			temp = DS18B20_2_Get_Temp()/10.0;
-			SensorTemp_2[0] = temp; 
-			SensorTemp_2[1] = temp; 
-			SensorTemp_2[2] = temp;
+			if((temp > 5.0)&&(temp < 70.0))
+			{
+				SensorTemp_2[0] = temp; 
+				SensorTemp_2[1] = temp; 
+				SensorTemp_2[2] = temp;
+			}else
+			{
+				temp = 20;
+				SensorTemp_2[0] = temp; 
+				SensorTemp_2[1] = temp; 
+				SensorTemp_2[2] = temp;
+			}
 			break;
 		}else
 		{
@@ -162,8 +169,14 @@ int incubatorInit(void)
 	usart2Printf("[ok] [6] extraGPIO ok! \n");
 	Delay_ms(20);
 	#endif
-	Delay_ms(100);
-	TIM_Cmd(TIM4, ENABLE); //开启定时采样中断
+	// TIM4初始化
+	TIM4_Init();
+//	TIM_Cmd(TIM4, DISABLE); // 关闭定时采样中断
+	#ifdef DEBUGIT
+	usart2Printf("[ok] [4] TIM4 ok! \n");
+	Delay_ms(20);
+	#endif
+//	TIM_Cmd(TIM4, ENABLE); //开启定时采样中断
 
 	return 1;
 }

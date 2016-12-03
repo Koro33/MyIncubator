@@ -19,8 +19,8 @@
 #include "stm32f10x.h"
 
 #define PORT_BEEP GPIOB
-#define PIN_BEEP GPIO_Pin_8
-#define PIN_SWITCH2 GPIO_Pin_9
+#define PIN_BEEP GPIO_Pin_10
+#define PIN_SWITCH2 GPIO_Pin_13
 
 void extraGPIOInit(void);
 

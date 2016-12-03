@@ -30,7 +30,7 @@ int usart1_RevTask(void);
 int usart1_TmtTask(void);
 int strcatchar(char *front, char rear);
 int strclr(char *str);
-int sendHMIEndCmd(void);
+int usart1_sendHMIEndCmd(void);
 
 #endif /* __USART1_H */
 
