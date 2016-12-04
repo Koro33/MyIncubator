@@ -5,14 +5,14 @@
 	* @version V1.0.0
 	* @date    26-Oct-2016
 	* @brief 
-	* 	PA.02: (USART2_TX) DEBUG
-	* 	PA.03: (USART2_RX) DEBUG
-	* 	PA.09: (USART1_TX) HMI LCD
-	* 	PA.10: (USART1_RX) HMI LCD
-	* 	PA.06: (TIM3_CH1) 加热片1
-	*		PA.07: (TIM3_CH2) 加热片1
-	*		PB.00: (TIM3_CH3) 风扇1、2
-	*		PB.01: (TIM3_CH4) NC
+	* 			PA.02: (USART2_TX) DEBUG
+	* 			PA.03: (USART2_RX) DEBUG
+	* 			PA.09: (USART1_TX) HMI LCD
+	* 			PA.10: (USART1_RX) HMI LCD
+	* 			PA.06: (TIM3_CH1) 加热片1
+	*				PA.07: (TIM3_CH2) 加热片1
+	*				PB.00: (TIM3_CH3) 风扇1、2
+	*				PB.01: (TIM3_CH4) NC
 	*
 	******************************************************************************
 	* @attention

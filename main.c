@@ -22,10 +22,10 @@ char U1_txBuffer[128];
 char U2_rxBuffer[64];
 // 与串口屏的功能切换标志 0：主界面更新温度  1：图表界面更新曲线
 int8_t Usart1TmtChoiceFlag = 0;
-// 控制方式的选择，0：手动 1：BB控制 2：PID控制 
+// 控制方式的选择，0：手动 1：BB控制 2：PID控制
 int8_t CtrlMode = 0;
 // PID控制器参数
-struct PID PID_1={20.0,2.0,1.0,999.0};
+struct PID PID_1 = {20.0, 2.0, 1.0, 999.0};
 // 加热器功率
 uint16_t HeatPower = 0;
 // 风扇功率
@@ -33,37 +33,37 @@ uint16_t FanPower = 0;
 
 int main(void)
 {
-	incubatorInit();
-	while (1)
-	{
-//		int i;
+  incubatorInit();
+  while (1)
+  {
+    //		int i;
 
-		if (usart1_avilable() == 1)
-		{
-			usart1_RevTask();
-		}
-		
-		if(TempUpdateFlag == 1)
-		{
-			#ifdef DEBUGIT
-			usart2Printf("RawTemp [1] %.2f  [2] %.2f\n", SensorTemp_1[0], SensorTemp_2[0]);
-			#endif
-			sensorFilter(SensorTemp_1, SensorTemp_2);
-			sensorFusion(SensorTemp_1, SensorTemp_2, SensorTempProcessed);
-			#ifdef DEBUGIT
-			usart2Printf("ProcessedTemp [*] %.3f\n", SensorTempProcessed[0]);
-			#endif
-			switch (CtrlMode)
-			{
-				case 0: 
+    if (usart1_avilable() == 1)
+    {
+      usart1_RevTask();
+    }
+
+    if (TempUpdateFlag == 1)
+    {
+#ifdef DEBUGIT
+      usart2Printf("RawTemp [1] %.2f  [2] %.2f\n", SensorTemp_1[0], SensorTemp_2[0]);
+#endif
+      sensorFilter(SensorTemp_1, SensorTemp_2);
+      sensorFusion(SensorTemp_1, SensorTemp_2, SensorTempProcessed);
+#ifdef DEBUGIT
+      usart2Printf("ProcessedTemp [*] %.3f\n", SensorTempProcessed[0]);
+#endif
+      switch (CtrlMode)
+      {
+				case 0:
 				{
 					break;
 				}
-				case 1: 
+				case 1:
 				{
 					break;
 				}
-				case 2: 
+				case 2:
 				{
 //					HeatPower = PID_Control_1(SensorTempProcessed[0], TargetTemp);
 					break;
@@ -72,111 +72,122 @@ int main(void)
 				{
 					break;
 				}
-			}
-			setPower_Heat1_Heat2(HeatPower, HeatPower);
-			setPower_Fan(FanPower);
-			usart1_TmtTask();
-			TempUpdateFlag = 0;
-		}
-//		Delay_ms(100);
-	}
+      }
+      setPower_Heat1_Heat2(HeatPower, HeatPower);
+      setPower_Fan(FanPower);
+      usart1_TmtTask();
+      TempUpdateFlag = 0;
+    }
+    //		Delay_ms(100);
+  }
 }
 
 int incubatorInit(void)
-{ 
-	int i; // 重启次数标志
-	
-	// NVIC初始化，确定组号
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
-	// USART初始化
-	USART_Config();
-	#ifdef DEBUGIT
-	Delay_ms(10);
-	usart2Printf("MyIncubator START \n");
-	usart2Printf("[ok] [1] NVIC ok! \n[ok] [2] USART ok! \n");
-	Delay_ms(20);
-	#endif
-	// TIM3初始化
-	TIM3_PWM_Init();
-	#ifdef DEBUGIT
-	usart2Printf("[ok] [3] TIM3 ok! \n");
-	Delay_ms(20);
-	#endif
-	
-	// DS18B20_1初始化
-	for(i=0;i<3;i++)
-	{
-		if(DS18B20_1_Init() == 0)
-		{
-			float temp;
-			temp = DS18B20_1_Get_Temp()/10.0;
-			if((temp > 5.0)&&(temp < 70.0))
-			{
-				SensorTemp_1[0] = temp; 
-				SensorTemp_1[1] = temp; 
-				SensorTemp_1[2] = temp;
-			}else
-			{
-				temp = 20;
-				SensorTemp_1[0] = temp; 
-				SensorTemp_1[1] = temp; 
-				SensorTemp_1[2] = temp;
-			}
-			break;
-		}else
-		{
-			#ifdef DEBUGIT
-			usart2Printf("[fail] [5] DS18B20_1 Check Failed!\n");
-			while(1);
-			#endif
-		}
-	}
-	// DS18B20_2初始化
-	for(i=0;i<3;i++)
-	{
-		if(DS18B20_2_Init() == 0)
-		{
-			float temp;
-			temp = DS18B20_2_Get_Temp()/10.0;
-			if((temp > 5.0)&&(temp < 70.0))
-			{
-				SensorTemp_2[0] = temp; 
-				SensorTemp_2[1] = temp; 
-				SensorTemp_2[2] = temp;
-			}else
-			{
-				temp = 20;
-				SensorTemp_2[0] = temp; 
-				SensorTemp_2[1] = temp; 
-				SensorTemp_2[2] = temp;
-			}
-			break;
-		}else
-		{
-			#ifdef DEBUGIT
-			usart2Printf("[fail] [5] DS18B20_2 Check Failed!\n");
-			while(1);
-			#endif
-		}
-	}
-	#ifdef DEBUGIT
-	usart2Printf("[ok] [5] DS18B20 ok! \n");
-	Delay_ms(20);
-	#endif
-	// 其他GPIO初始化(led & switch)
-  extraGPIOInit();
-	#ifdef DEBUGIT
-	usart2Printf("[ok] [6] extraGPIO ok! \n");
-	Delay_ms(20);
-	#endif
-	// TIM4初始化
-	TIM4_Init();
-//	TIM_Cmd(TIM4, DISABLE); // 关闭定时采样中断
-	#ifdef DEBUGIT
-	usart2Printf("[ok] [4] TIM4 ok! \n");
-	Delay_ms(20);
-	#endif
-//	TIM_Cmd(TIM4, ENABLE); //开启定时采样中断
+{
+  int i; // 重启次数标志
 
-	return 1;
+  // NVIC初始化，确定组号
+  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+  // USART初始化
+  USART_Config();
+#ifdef DEBUGIT
+  Delay_ms(10);
+  usart2Printf("MyIncubator START \n");
+  usart2Printf("[ok] [1] NVIC ok! \n[ok] [2] USART ok! \n");
+  Delay_ms(20);
+#endif
+  // TIM3初始化
+  TIM3_PWM_Init();
+#ifdef DEBUGIT
+  usart2Printf("[ok] [3] TIM3 ok! \n");
+  Delay_ms(20);
+#endif
+
+  // DS18B20_1初始化
+  for (i = 0; i < 3; i++)
+  {
+    if (DS18B20_1_Init() == 0)
+    {
+      float temp;
+      temp = DS18B20_1_Get_Temp() / 10.0;
+      if ((temp > 5.0) && (temp < 70.0))
+      {
+				SensorTemp_1[0] = temp;
+				SensorTemp_1[1] = temp;
+				SensorTemp_1[2] = temp;
+      }
+      else
+      {
+				temp = 20;
+				SensorTemp_1[0] = temp;
+				SensorTemp_1[1] = temp;
+				SensorTemp_1[2] = temp;
+      }
+      break;
+    }
+    else
+    {
+#ifdef DEBUGIT
+      usart2Printf("[fail] [4] DS18B20_1 Check Failed!\n");
+      while (1)
+				;
+#endif
+    }
+  }
+  // DS18B20_2初始化
+  for (i = 0; i < 3; i++)
+  {
+    if (DS18B20_2_Init() == 0)
+    {
+      float temp;
+      temp = DS18B20_2_Get_Temp() / 10.0;
+      if ((temp > 5.0) && (temp < 70.0))
+      {
+				SensorTemp_2[0] = temp;
+				SensorTemp_2[1] = temp;
+				SensorTemp_2[2] = temp;
+      }
+      else
+      {
+				temp = 20;
+				SensorTemp_2[0] = temp;
+				SensorTemp_2[1] = temp;
+				SensorTemp_2[2] = temp;
+      }
+      break;
+    }
+    else
+    {
+#ifdef DEBUGIT
+      usart2Printf("[fail] [4] DS18B20_2 Check Failed!\n");
+      while (1)
+				;
+#endif
+    }
+  }
+#ifdef DEBUGIT
+  usart2Printf("[ok] [4] DS18B20 ok! \n");
+  Delay_ms(20);
+#endif
+  // 其他GPIO初始化(led & switch)
+  extraGPIOInit();
+#ifdef DEBUGIT
+  usart2Printf("[ok] [5] extraGPIO ok! \n");
+  Delay_ms(20);
+#endif
+	// HMILCD初始化
+	usart1_InitTmtTask();
+#ifdef DEBUGIT
+  usart2Printf("[ok] [6] LCD ok! \n");
+  Delay_ms(20);
+#endif
+  // TIM4初始化
+  TIM4_Init();
+#ifdef DEBUGIT
+  usart2Printf("[ok] [7] TIM4 ok! \n");
+  Delay_ms(20);
+#endif
+
+
+  return 1;
 }

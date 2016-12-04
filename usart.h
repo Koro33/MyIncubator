@@ -28,10 +28,11 @@ uint8_t usart1_peek(void);
 void USART1_IRQHandler_ex(void);
 int usart1_RevTask(void);
 int usart1_TmtTask(void);
+int usart1_InitTmtTask(void);
 int strcatchar(char *front, char rear);
 int strclr(char *str);
 int usart1_sendHMIEndCmd(void);
-
+float Strnum2Num(char *Strnum, uint8_t StartNum, uint8_t EndNum);
 #endif /* __USART1_H */
 
 
