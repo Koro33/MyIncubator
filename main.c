@@ -52,6 +52,11 @@ int main(void)
       sensorFusion(SensorTemp_1, SensorTemp_2, SensorTempProcessed);
 #ifdef DEBUGIT
       usart2Printf("ProcessedTemp [*] %.3f\n", SensorTempProcessed[0]);
+			usart2Printf("%.3f ", SensorTempProcessed[0]);
+			usart2Printf("TargetTemp %.2f ", TargetTemp);
+			usart2Printf("PID_1.Kp %.2f ", PID_1.Kp);
+			usart2Printf("PID_1.Ki %.2f ", PID_1.Ki);
+			usart2Printf("PID_1.Kd %.2f\n", PID_1.Kd);
 #endif
       switch (CtrlMode)
       {
@@ -61,11 +66,16 @@ int main(void)
 				}
 				case 1:
 				{
+					FanPower = 999;
+					HeatPower = BB_Control_1(SensorTempProcessed[0], TargetTemp);
+					usart2Printf("BB mode");
 					break;
 				}
 				case 2:
 				{
+					FanPower = 999;
 //					HeatPower = PID_Control_1(SensorTempProcessed[0], TargetTemp);
+					usart2Printf("PID mode");
 					break;
 				}
 				default:
@@ -110,7 +120,7 @@ int incubatorInit(void)
     {
       float temp;
       temp = DS18B20_1_Get_Temp() / 10.0;
-      if ((temp > 5.0) && (temp < 70.0))
+      if ((temp > 5.0) && (temp < 90.0))
       {
 				SensorTemp_1[0] = temp;
 				SensorTemp_1[1] = temp;
@@ -118,7 +128,7 @@ int incubatorInit(void)
       }
       else
       {
-				temp = 20;
+				temp = 25;
 				SensorTemp_1[0] = temp;
 				SensorTemp_1[1] = temp;
 				SensorTemp_1[2] = temp;
@@ -141,7 +151,7 @@ int incubatorInit(void)
     {
       float temp;
       temp = DS18B20_2_Get_Temp() / 10.0;
-      if ((temp > 5.0) && (temp < 70.0))
+      if ((temp > 5.0) && (temp < 90.0))
       {
 				SensorTemp_2[0] = temp;
 				SensorTemp_2[1] = temp;
@@ -149,7 +159,7 @@ int incubatorInit(void)
       }
       else
       {
-				temp = 20;
+				temp = 25;
 				SensorTemp_2[0] = temp;
 				SensorTemp_2[1] = temp;
 				SensorTemp_2[2] = temp;

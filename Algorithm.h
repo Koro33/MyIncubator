@@ -29,7 +29,7 @@ struct PID
 
 /* sensorFilter */
 // 最大温度变化阈值
-#define MaxTempChange 10
+#define MaxTempChange 45
 
 /* sensorFusion */
 // 传感器1测量权重
@@ -41,8 +41,9 @@ struct PID
 // BB控制上升下阈值
 #define BB_Heat_Threshold -1.5
 // BB控制下降上阈值
-#define BB_Cool_Threshold 1.5
+#define BB_Cool_Threshold 0
 
+float BB_Control_1(float current_position, float target_position);
 float PID_Control_1(float current_position, float target_position);
 int8_t sensorFusion(float *SensorTemp_1, float *SensorTemp_2, float *SensorTempProcessed);
 int8_t sensorFilter(float *SensorTemp_1, float *SensorTemp_2);

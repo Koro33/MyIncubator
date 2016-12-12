@@ -293,7 +293,8 @@ int usart1_RevTask(void)
     usart1_read();
     Delay_us(200);
     usart1_read();
-
+		Delay_us(200);
+		
     if (U1_rxBuffer[0] == 0x65) //某些按键被按下
     {
       if (U1_rxBuffer[1] == 0x01)
@@ -341,7 +342,7 @@ int usart1_RevTask(void)
 				}
 				if (U1_rxBuffer[2] == 0x0E) // Kp
 				{
-					PID_1.Kd = Strnum2Num(U1_rxBuffer, 4, RevCmdLength);
+					PID_1.Kp = Strnum2Num(U1_rxBuffer, 4, RevCmdLength);
 				}
 				if (U1_rxBuffer[2] == 0x0F) // Ki
 				{
@@ -371,9 +372,9 @@ int usart1_TmtTask(void)
     usart1_sendHMIEndCmd();
     if ((CtrlMode == 1) || (CtrlMode == 2))
     {
-      printf("main.h0.val=%d", HeatPower);
+      printf("main.h0.val=%d", FanPower);
       usart1_sendHMIEndCmd();
-      printf("main.h1.val=%d", FanPower);
+      printf("main.h1.val=%d", HeatPower);
       usart1_sendHMIEndCmd();
     }
   }
@@ -393,7 +394,7 @@ int usart1_TmtTask(void)
 /**
 	* @brief  usart1的初始化发送任务
 	* @param  无
-	* @return 无
+	* @return 0：failed 1：successful
 	* @attention 无
 	*/
 int usart1_InitTmtTask(void)
@@ -404,7 +405,7 @@ int usart1_InitTmtTask(void)
   usart1_sendHMIEndCmd();
 	printf("main.h1.val=%d", FanPower);
   usart1_sendHMIEndCmd();
-	printf("main.t2.txt=\"%.2f\"", PID_1.Kd);
+	printf("main.t2.txt=\"%.2f\"", PID_1.Kp);
   usart1_sendHMIEndCmd();
 	printf("main.t3.txt=\"%.2f\"", PID_1.Ki);
   usart1_sendHMIEndCmd();
@@ -466,11 +467,11 @@ int usart1_sendHMIEndCmd(void)
 	* @return 转换成的数字(float)
 	* @attention 无
 	*/
-float Strnum2Num(char *Strnum, uint8_t StartNum, uint8_t EndNum)
+float Strnum2Num(char *numStr, uint8_t StartNum, uint8_t EndNum)
 {
 	float num=0.0;
-	Strnum[EndNum]='\0';
-	num = (float)atof(Strnum+StartNum);
+	numStr[EndNum]='\0';
+	num = (float)atof(numStr + StartNum);
 	return num;
 }
 /**

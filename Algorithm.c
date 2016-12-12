@@ -61,33 +61,31 @@ float PID_Control_1(float current_position, float target_position)
 	*/
 float BB_Control_1(float current_position, float target_position)
 {
-	float HeatTempThreshold = target_position + BB_Heat_Threshold;
-	float CoolTempThreshold = target_position + BB_Cool_Threshold;
-	if((current_position - target_position) > 5)
+	static int8_t DirFlag = 0; // 经过低温为0 经过高温为1 默认0
+	float HeatTempThreshold = target_position + BB_Heat_Threshold; // 25
+	float CoolTempThreshold = target_position + BB_Cool_Threshold; // 35
+	if(current_position <= HeatTempThreshold)
 	{
-		return 0;
-	}else
-	if((current_position - target_position) < -5)
-	{
+		DirFlag = 0; //经过低温
 		return 999;
 	}
-	else
+	if(current_position >= CoolTempThreshold)
 	{
-		if(HeatPower > 0)
+		DirFlag = 1; // 经过高温
+		return 0;
+	}
+	if((current_position < CoolTempThreshold)&&(current_position > HeatTempThreshold))
+	{
+		if(DirFlag == 0)
 		{
-			if(current_position > HeatTempThreshold)
-			{
-				return 0;
-			}
+			return 0;
 		}
-		if(HeatPower == 0)
+		if(DirFlag == 1)
 		{
-			if(current_position < CoolTempThreshold)
-			{
-				return 999;
-			}
+			return 999;
 		}
 	}
+	
 	return 0;
 }
 
