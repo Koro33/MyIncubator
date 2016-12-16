@@ -20,7 +20,7 @@ static void TIM4_Config(void)
 	
 	/* TIM_Period * TIM_Prescaler * Hz = TIM_Clock */
   /* Time base configuration （10Hz）*/
-  TIM_TimeBaseStructure.TIM_Period = 2999;		      // (999+1)次，为一个定时周期
+  TIM_TimeBaseStructure.TIM_Period = 6999;		      // (999+1)次，为一个定时周期
   TIM_TimeBaseStructure.TIM_Prescaler = 7199;		      // 设置预分频：7200分频，即为10KHz
   TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;     // 设置时钟分频系数：不分频 72MHz
   TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up; // 向上计数模式

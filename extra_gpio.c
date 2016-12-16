@@ -12,13 +12,6 @@ void extraGPIOInit(void)
   GPIO_InitTypeDef GPIO_InitStructure;
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 
-//  //限位开关
-//  GPIO_InitStructure.GPIO_Pin = GPIO_SWITCH1 | GPIO_SWITCH2;
-//  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-//  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;
-//  GPIO_Init(PORT_SWITCH, &GPIO_InitStructure);
-
-  //led
   GPIO_InitStructure.GPIO_Pin = PIN_BEEP | PIN_SWITCH2;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;

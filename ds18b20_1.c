@@ -28,7 +28,7 @@ void DS18B20_1_GPIO_Config(void)
 void DS18B20_1_Rst(void)
 {
   CLR_DS18B20_1();	 //À­µÍDQ
-  delay_us_ds18b20(950); //À­µÍ750us
+  delay_us_ds18b20(900); //À­µÍ750us
   SET_DS18B20_1();	 //DQ=1
   delay_us_ds18b20(60);  //15us
 }

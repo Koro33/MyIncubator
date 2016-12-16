@@ -24,8 +24,9 @@ char U2_rxBuffer[64];
 int8_t Usart1TmtChoiceFlag = 0;
 // 控制方式的选择，0：手动 1：BB控制 2：PID控制
 int8_t CtrlMode = 0;
-// PID控制器参数
-struct PID PID_1 = {20.0, 2.0, 1.0, 999.0};
+// PID控制器参数 	(1) 150.0, 0.13, 0.0, 999.0 稳定在40度 存在上下两次过冲（+1.5 -1.5）
+// 								(2) 150.0, 0.13, 0.0, 999.0 稳定在40度 存在上下两次过冲（+1.5 -1.5）
+struct PID PID_1 = {150.0, 0.13, 0.0, 999.0};
 // 加热器功率
 uint16_t HeatPower = 0;
 // 风扇功率
@@ -57,6 +58,7 @@ int main(void)
 			usart2Printf("PID_1.Kp %.2f ", PID_1.Kp);
 			usart2Printf("PID_1.Ki %.2f ", PID_1.Ki);
 			usart2Printf("PID_1.Kd %.2f\n", PID_1.Kd);
+			usart2Printf("HEATPOWER %d\n", HeatPower);
 #endif
       switch (CtrlMode)
       {
@@ -68,14 +70,14 @@ int main(void)
 				{
 					FanPower = 999;
 					HeatPower = BB_Control_1(SensorTempProcessed[0], TargetTemp);
-					usart2Printf("BB mode");
+					usart2Printf("BB mode\n");
 					break;
 				}
 				case 2:
 				{
 					FanPower = 999;
-//					HeatPower = PID_Control_1(SensorTempProcessed[0], TargetTemp);
-					usart2Printf("PID mode");
+					HeatPower = (uint16_t)PID_Control_1(SensorTempProcessed[0], TargetTemp);
+					usart2Printf("PID mode\n");
 					break;
 				}
 				default:
@@ -198,6 +200,7 @@ int incubatorInit(void)
   Delay_ms(20);
 #endif
 
+  Delay_ms(750); // ds18b20两次采样时间间隔不小于750ms
 
   return 1;
 }

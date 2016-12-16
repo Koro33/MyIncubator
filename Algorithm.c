@@ -24,11 +24,11 @@ float PID_Control_1(float current_position, float target_position)
   static float output = 0;
   static float inte = 0;
 	
-	if((current_position - target_position) > 5)
+	if((current_position - target_position) > 8)
 	{
 		return 0;
 	}
-	if((current_position - target_position) < -5)
+	if((current_position - target_position) < -8)
 	{
 		return PID_1.MAXOUT;
 	}
@@ -44,12 +44,12 @@ float PID_Control_1(float current_position, float target_position)
     output = PID_1.MAXOUT;
   }
 
-  if (output < -PID_1.MAXOUT)
+  if (output < 0)
   {
-    output = -PID_1.MAXOUT;
+    output = 0;
   }
 
-  return (output + PID_1.MAXOUT) / 2;
+  return output;
 }
 
 /**

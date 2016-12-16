@@ -38,7 +38,7 @@ void TIM3_GPIO_Config(void)
 	* @return 无
 	* @attention 频率的计算方法 (TIM_Period + 1) * (TIM_Prescaler + 1) * n Hz = RCC_APB1Periph_TIM3(72MHz)
 	* 					 TIM_Period影响各通道跳变值的最大值，为计算方便最好取整
-	* 					 (999 + 1) * (71 + 1) * 1000 Hz = 72000000
+	* 					 (999 + 1) * (143 + 1) * 500 Hz = 72000000
 	*/
 void TIM3_Mode_Config(void)
 {
@@ -46,10 +46,10 @@ void TIM3_Mode_Config(void)
 
   /* Time base configuration */
   TIM_TimeBaseStructure.TIM_Period = 999;		      // 周期次数 TIM_Period * TIM_Prescaler * Hz = TIM_Clock
-  TIM_TimeBaseStructure.TIM_Prescaler = 71;		      //设置预分频：分频72，即为1M
+  TIM_TimeBaseStructure.TIM_Prescaler = 143;		      //设置预分频：分频72，即为1M
   TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;     //设置时钟分频系数：不分频
   TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up; //向上计数模式
-							      //结果为1KHz
+							      //结果为500Hz
   TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
 }
 

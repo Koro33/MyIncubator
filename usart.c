@@ -374,15 +374,19 @@ int usart1_TmtTask(void)
     {
       printf("main.h0.val=%d", FanPower);
       usart1_sendHMIEndCmd();
+			printf("main.n0.val=%d", FanPower);
+      usart1_sendHMIEndCmd();
       printf("main.h1.val=%d", HeatPower);
+      usart1_sendHMIEndCmd();
+			printf("main.n1.val=%d", HeatPower);
       usart1_sendHMIEndCmd();
     }
   }
   else if (Usart1TmtChoiceFlag == 1)
   {
-    printf("add 1,0,%d", (int)(SensorTempProcessed[0] * 3));
+    printf("add 1,0,%d", (int)(SensorTempProcessed[0] * 4));
     usart1_sendHMIEndCmd();
-    printf("add 1,1,%d", (int)(TargetTemp * 3));
+    printf("add 1,1,%d", (int)(TargetTemp * 4));
     usart1_sendHMIEndCmd();
   }
   else
@@ -405,11 +409,15 @@ int usart1_InitTmtTask(void)
   usart1_sendHMIEndCmd();
 	printf("main.h1.val=%d", FanPower);
   usart1_sendHMIEndCmd();
-	printf("main.t2.txt=\"%.2f\"", PID_1.Kp);
+	printf("main.n0.val=%d", HeatPower);
   usart1_sendHMIEndCmd();
-	printf("main.t3.txt=\"%.2f\"", PID_1.Ki);
+	printf("main.n1.val=%d", FanPower);
   usart1_sendHMIEndCmd();
-	printf("main.t4.txt=\"%.2f\"", PID_1.Kd);
+	printf("main.t2.txt=\"%.1f\"", PID_1.Kp);
+  usart1_sendHMIEndCmd();
+	printf("main.t3.txt=\"%.1f\"", PID_1.Ki);
+  usart1_sendHMIEndCmd();
+	printf("main.t4.txt=\"%.1f\"", PID_1.Kd);
   usart1_sendHMIEndCmd();
 	
 	return 1;
