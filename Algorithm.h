@@ -4,8 +4,8 @@
   * @author  ycg1024
   * @version V1.0.0
   * @date    26-Oct-2016
-  * @brief    
-  *          
+  * @brief
+  *
   *
   ******************************************************************************
   * @attention
@@ -18,7 +18,7 @@
 
 #include "stm32f10x.h"
 
-// PID控制器参数结构体
+  // PID控制器参数结构体
 struct PID
 {
 	float Kp;
@@ -42,6 +42,10 @@ struct PID
 #define BB_Heat_Threshold -1.5
 // BB控制下降上阈值
 #define BB_Cool_Threshold 0
+
+/* PID_Control_1 */
+#define PIDControl_Threshold 8
+
 
 float BB_Control_1(float current_position, float target_position);
 float PID_Control_1(float current_position, float target_position);

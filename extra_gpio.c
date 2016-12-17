@@ -12,7 +12,7 @@ void extraGPIOInit(void)
   GPIO_InitTypeDef GPIO_InitStructure;
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 
-  GPIO_InitStructure.GPIO_Pin = PIN_BEEP | PIN_SWITCH2;
+  GPIO_InitStructure.GPIO_Pin = PIN_BEEP;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
   GPIO_Init(PORT_BEEP, &GPIO_InitStructure);

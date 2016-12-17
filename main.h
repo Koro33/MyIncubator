@@ -4,7 +4,7 @@
 	* @author  ycg1024
 	* @version V1.0.0
 	* @date    26-Oct-2016
-	* @brief 
+	* @brief
 	* 			PA.02: (USART2_TX) DEBUG
 	* 			PA.03: (USART2_RX) DEBUG
 	* 			PA.09: (USART1_TX) HMI LCD
@@ -13,6 +13,11 @@
 	*				PA.07: (TIM3_CH2) º”»»∆¨1
 	*				PB.00: (TIM3_CH3) ∑Á…»1°¢2
 	*				PB.01: (TIM3_CH4) NC
+	*				PB.08: () DS18B20_1
+	*				PB.09: () DS18B20_2
+	*				PB.10: () BEEP & LED
+	* 			PA.13: (SWDIO) STLINK-SW_DEBUG
+	* 			PA.14: (SWCLK) STLINK-SW_DEBUG
 	*
 	******************************************************************************
 	* @attention
@@ -34,7 +39,6 @@
 #include "string.h"
 #include "ds18b20.h"
 #include "Algorithm.h"
-// #include "arm_math.h"
 
 int incubatorInit(void);
 
