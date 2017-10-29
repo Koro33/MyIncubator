@@ -1,11 +1,11 @@
 /**
 	******************************************************************************
-	* @file    stm32f10x_it.c 
+	* @file    stm32f10x_it.c
 	* @author  ycg1024
 	* @version V1.0.0
 	* @date    26-Oct-2016
 	* @brief   Main Interrupt Service Routines.
-	*          This file provides template for all exceptions handler and 
+	*          This file provides template for all exceptions handler and
 	*          peripherals interrupt service routine.
 	******************************************************************************
 	* @attention
@@ -13,7 +13,7 @@
 	******************************************************************************
 	*/
 
-/* Includes ------------------------------------------------------------------*/
+	/* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_it.h"
 #include "main.h"
 
@@ -21,22 +21,22 @@
 	* @{
 	*/
 
-/* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
-/* Private function prototypes -----------------------------------------------*/
-/* Private functions ---------------------------------------------------------*/
+	/* Private typedef -----------------------------------------------------------*/
+	/* Private define ------------------------------------------------------------*/
+	/* Private macro -------------------------------------------------------------*/
+	/* Private variables ---------------------------------------------------------*/
+	/* Private function prototypes -----------------------------------------------*/
+	/* Private functions ---------------------------------------------------------*/
 
-/******************************************************************************/
-/*            Cortex-M3 Processor Exceptions Handlers                         */
-/******************************************************************************/
+	/******************************************************************************/
+	/*            Cortex-M3 Processor Exceptions Handlers                         */
+	/******************************************************************************/
 
-/**
-	* @brief  This function handles NMI exception.
-	* @param  None
-	* @retval None
-	*/
+	/**
+		* @brief  This function handles NMI exception.
+		* @param  None
+		* @retval None
+		*/
 void NMI_Handler(void)
 {
 }
@@ -48,10 +48,10 @@ void NMI_Handler(void)
 	*/
 void HardFault_Handler(void)
 {
-  /* Go to infinite loop when Hard Fault exception occurs */
-  while (1)
-  {
-  }
+	/* Go to infinite loop when Hard Fault exception occurs */
+	while (1)
+	{
+	}
 }
 
 /**
@@ -61,10 +61,10 @@ void HardFault_Handler(void)
 	*/
 void MemManage_Handler(void)
 {
-  /* Go to infinite loop when Memory Manage exception occurs */
-  while (1)
-  {
-  }
+	/* Go to infinite loop when Memory Manage exception occurs */
+	while (1)
+	{
+	}
 }
 
 /**
@@ -74,10 +74,10 @@ void MemManage_Handler(void)
 	*/
 void BusFault_Handler(void)
 {
-  /* Go to infinite loop when Bus Fault exception occurs */
-  while (1)
-  {
-  }
+	/* Go to infinite loop when Bus Fault exception occurs */
+	while (1)
+	{
+	}
 }
 
 /**
@@ -87,10 +87,10 @@ void BusFault_Handler(void)
 	*/
 void UsageFault_Handler(void)
 {
-  /* Go to infinite loop when Usage Fault exception occurs */
-  while (1)
-  {
-  }
+	/* Go to infinite loop when Usage Fault exception occurs */
+	while (1)
+	{
+	}
 }
 
 /**
@@ -143,8 +143,7 @@ void SysTick_Handler(void)
 	*/
 void USART1_IRQHandler(void) //串口1中断服务程序
 {
-
-  USART1_IRQHandler_ex();
+	USART1_IRQHandler_ex();
 }
 /**
 	* @brief  This function handles TIM4 interrupt request.
@@ -153,7 +152,7 @@ void USART1_IRQHandler(void) //串口1中断服务程序
 	*/
 void TIM4_IRQHandler(void) //TIM4 中断
 {
-  TIM4_IRQHandler_ex();
+	TIM4_IRQHandler_ex();
 }
 
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

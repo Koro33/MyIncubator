@@ -4,8 +4,8 @@
 	* @author  ycg1024
 	* @version V1.0.0
 	* @date    26-Oct-2016
-	* @brief    
-	*          
+	* @brief
+	*
 	*
 	******************************************************************************
 	* @attention
@@ -23,8 +23,8 @@
 #define PIN_SWITCH2 GPIO_Pin_13
 
 void extraGPIOInit(void);
-
 void beep(uint8_t Num, uint8_t IntervalNum);
+
 #endif /* __EXTRAGPIO_H */
 
 /******************* (C) COPYRIGHT 2016 ycg1024 ***********END OF FILE*********/

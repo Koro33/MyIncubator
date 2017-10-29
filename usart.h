@@ -4,8 +4,8 @@
 	* @author  ycg1024
 	* @version V1.0.0
 	* @date    26-Oct-2016
-	* @brief    
-	*          
+	* @brief
+	*
 	*
 	******************************************************************************
 	* @attention
@@ -13,14 +13,23 @@
 	******************************************************************************
 	*/
 
-#ifndef __USART1_H
-#define __USART1_H
+#ifndef __USART_H
+#define __USART_H
 
 #include "stm32f10x.h"
 
+// usart1队列中断缓冲大小
+#define U1_IT_MaxBufferSize 128
+// usart2发送缓冲
+#define U2_CMD_BUFFER_LEN 128
+// usart1中断队列结构体
+struct que
+{
+	uint8_t *head;
+	uint8_t *tail;
+};
 
 void USART_Config(void);
-//int fputc(int ch, FILE *f);
 void usart2Printf(char *fmt, ...);
 int usart1_avilable(void);
 uint8_t usart1_read(void);
@@ -33,7 +42,8 @@ int strcatchar(char *front, char rear);
 int strclr(char *str);
 int usart1_sendHMIEndCmd(void);
 float Strnum2Num(char *Strnum, uint8_t StartNum, uint8_t EndNum);
-#endif /* __USART1_H */
+
+#endif /* __USART_H */
 
 
 /******************* (C) COPYRIGHT 2016 ycg1024 ***********END OF FILE*********/

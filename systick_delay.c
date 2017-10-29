@@ -9,12 +9,12 @@
 	*/
 void Delay_us(uint32_t n)
 {
-  SysTick->LOAD = 72 * n;     //装载计数值，因为时钟72M，72次在1μs
-//  SysTick->CTRL = 0x00000005; //时钟来源设为为HCLK(72M)，打开定时器
+	SysTick->LOAD = 72 * n;     //装载计数值，因为时钟72M，72次在1μs
+  //  SysTick->CTRL = 0x00000005; //时钟来源设为为HCLK(72M)，打开定时器
 	SysTick->CTRL = 0x00000005; //时钟来源设为为HCLK(72M)，打开定时器
-  while (!(SysTick->CTRL & 0x00010000))
-    ;			      //等待计数到0
-  SysTick->CTRL = 0x00000004; //关闭定时器
+	while (!(SysTick->CTRL & 0x00010000))
+		;			      //等待计数到0
+	SysTick->CTRL = 0x00000004; //关闭定时器
 }
 
 /**
@@ -25,9 +25,9 @@ void Delay_us(uint32_t n)
 	*/
 void Delay_ms(uint32_t n)
 {
-  int i;
-  for (i = 0; i < n; i++)
-  {
-    Delay_us(1000);
-  }
+	int i;
+	for (i = 0; i < n; i++)
+	{
+		Delay_us(1000);
+	}
 }
